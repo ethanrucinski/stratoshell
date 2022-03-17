@@ -16,6 +16,7 @@ export class DynamoStack extends Stack {
             },
             billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
             removalPolicy: RemovalPolicy.DESTROY,
+            replicationRegions: ["us-west-2"],
         });
     }
 }
