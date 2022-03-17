@@ -10,11 +10,11 @@ RUN    apk update \
 
 # This image expects AUTHORIZED_KEYS environment variable to contain your ssh public key.
 
-COPY ../alpine-docker-entrypoint.sh /
+COPY docker-entrypoint.sh /
 
 EXPOSE 22
 
-ENTRYPOINT ["/alpine-docker-entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # -D in CMD below prevents sshd from becoming a daemon. -e is to log everything to stderr.
 CMD ["/usr/sbin/sshd", "-D", "-e"]
