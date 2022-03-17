@@ -1,0 +1,36 @@
+Resources:
+    GithubActionsRole:
+        Type: AWS::IAM::Role
+        Properties:
+            Description: Github Actions Role for Stratoshell
+            RoleName: !Sub Github-Actions-Role-${AWS::AccountId}
+            AssumeRolePolicyDocument:
+                {
+                    "Version": "2008-10-17",
+                    "Statement":
+                        [
+                            {
+                                "Effect": "Allow",
+                                "Principal":
+                                    {
+                                        "Federated": "arn:aws:iam::403707884266:oidc-provider/token.actions.githubusercontent.com",
+                                    },
+                                "Action": "sts:AssumeRoleWithWebIdentity",
+                                "Condition":
+                                    {
+                                        "ForAllValues:StringLike":
+                                            {
+                                                "token.actions.githubusercontent.com:sub": "repo:ethanrucinski/stratoshell*",
+                                            },
+                                    },
+                            },
+                        ],
+                }
+            Policies:
+                - PolicyName: cdk
+                  PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                          - Effect: Allow
+                            Action: sts:AssumeRole
+                            Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/cdk-base-*"
