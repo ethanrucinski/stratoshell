@@ -23,15 +23,13 @@ jobs:
                   aws-region: ${{ matrix.region }}
             - name: Setup Node
               uses: actions/setup-node@v2
-                with:
+              with:
                   node-version: 16
             - name: NPM CI
               working-directory: iac
               runs: |
-                npm ci
+                  npm ci
             - name: CDK Deploy
               working-directory: iac
               runs: |
-                cdk deploy --all --require-approval never --asset-metadata false --path-metadata false
-
-
+                  cdk deploy --all --require-approval never --asset-metadata false --path-metadata false
