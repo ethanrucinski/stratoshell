@@ -14,13 +14,24 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                region: [us-east-2, us-west-2]
+                region: [us-east-2]
         steps:
-            - name: aws-auth
+            - name: AWS Authenticate
               uses: aws-actions/configure-aws-credentials@v1.6.1
               with:
                   role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/Github-Actions-Role-${{ secrets.AWS_ACCOUNT_NUMBER }}
                   aws-region: ${{ matrix.region }}
-            - name: aws-auth-test
-              run: |
-                  aws sts get-caller-identity
+            - name: Setup Node
+              uses: actions/setup-node@v2
+                with:
+                  node-version: 16
+            - name: NPM CI
+              working-directory: iac
+              runs: |
+                npm ci
+            - name: CDK Deploy
+              working-directory: iac
+              runs: |
+                cdk deploy --all --require-approval never --asset-metadata false --path-metadata false
+
+
