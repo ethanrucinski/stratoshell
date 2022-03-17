@@ -17,7 +17,7 @@ export class NetworkStack extends Stack {
         });
 
         // Create ECR interface endpoint
-        new ec2.InterfaceVpcEndpoint(this, "stratoshell-ecr-docker-endpoint", {
+        new ec2.InterfaceVpcEndpoint(this, "stratoshell-ecr-endpoint", {
             vpc: this.vpc,
             service: ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER,
         });
