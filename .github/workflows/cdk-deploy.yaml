@@ -27,9 +27,9 @@ jobs:
                   node-version: 16
             - name: NPM CI
               working-directory: iac
-              runs: |
+              run: |
                   npm ci
             - name: CDK Deploy
               working-directory: iac
-              runs: |
+              run: |
                   cdk deploy --all --require-approval never --asset-metadata false --path-metadata false
