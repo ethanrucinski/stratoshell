@@ -26,7 +26,7 @@ export class ImageStack extends Stack {
 
             taskDefinition.addContainer(`${dockerpath}-container`, {
                 image: ecs.ContainerImage.fromAsset(
-                    `../../images/${dockerpath}`,
+                    __dirname + `/../../images/${dockerpath}/`,
                     {}
                 ),
             });
