@@ -14,6 +14,11 @@ export class NetworkStack extends Stack {
             enableDnsHostnames: true,
             enableDnsSupport: true,
             natGateways: 0,
+            gatewayEndpoints: {
+                S3: {
+                    service: ec2.GatewayVpcEndpointAwsService.S3,
+                },
+            },
         });
 
         // Create ECR interface endpoint
