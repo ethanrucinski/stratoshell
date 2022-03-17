@@ -9,17 +9,17 @@ permissions:
     contents: read
 
 jobs:
-    - cdk-deploy:
-          name: CDK Deploy
-          strategy:
-              matrix:
-                  region: [us-east-2, us-west-2]
-          steps:
-              - name: aws-auth
-                uses: aws-actions/configure-aws-credentials@v1.6.1
-                with:
-                    role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/Github-Actions-Role-${{ secrets.AWS_ACCOUNT_NUMBER }}
-                    aws-region: ${{ matrix.region }}
-              - name: aws-auth-test
-                run: |
-                    aws sts get-caller-identity
+    cdk-deploy:
+        name: CDK Deploy
+        strategy:
+            matrix:
+                region: [us-east-2, us-west-2]
+        steps:
+            - name: aws-auth
+              uses: aws-actions/configure-aws-credentials@v1.6.1
+              with:
+                  role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/Github-Actions-Role-${{ secrets.AWS_ACCOUNT_NUMBER }}
+                  aws-region: ${{ matrix.region }}
+            - name: aws-auth-test
+              run: |
+                  aws sts get-caller-identity
