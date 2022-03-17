@@ -15,7 +15,11 @@ const appConfig = {
 };
 
 // Network resources
-new NetworkStack(app, "stratoshell-network-stack", appConfig);
+const networkStack = new NetworkStack(
+    app,
+    "stratoshell-network-stack",
+    appConfig
+);
 
 // Dynamo resources in primary region only
 if (process.env.CDK_DEFAULT_REGION == "us-east-2") {
@@ -23,4 +27,4 @@ if (process.env.CDK_DEFAULT_REGION == "us-east-2") {
 }
 
 // Task and images
-new ImageStack(app, "stratoshell-image-stack", appConfig);
+new ImageStack(app, "stratoshell-image-stack", networkStack.vpc, appConfig);

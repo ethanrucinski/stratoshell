@@ -1,11 +1,25 @@
 import { Construct } from "constructs";
 import { Stack, StackProps } from "aws-cdk-lib";
 import { aws_ecs as ecs } from "aws-cdk-lib";
+import { aws_ec2 as ec2 } from "aws-cdk-lib";
 import * as fs from "fs";
 
 export class ImageStack extends Stack {
-    constructor(scope: Construct, id: string, props?: StackProps) {
+    public readonly cluster: ecs.Cluster;
+
+    constructor(
+        scope: Construct,
+        id: string,
+        vpc: ec2.Vpc,
+        props?: StackProps
+    ) {
         super(scope, id, props);
+
+        // Create ECS cluster
+        this.cluster = new ecs.Cluster(this, "stratoshell-cluster", {
+            vpc: vpc,
+            enableFargateCapacityProviders: true,
+        });
 
         // Get list of dockerfiles
         const dockerpath = fs
