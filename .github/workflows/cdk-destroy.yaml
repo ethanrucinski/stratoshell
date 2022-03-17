@@ -1,7 +1,7 @@
 name: CDK Deploy
 
 # Set deployment triggers
-on: [push, workflow_dispatch]
+on: [workflow_dispatch]
 
 # Set github token permissions
 permissions:
@@ -37,4 +37,4 @@ jobs:
             - name: CDK Deploy
               working-directory: iac
               run: |
-                  cdk deploy --all --require-approval never --asset-metadata false --path-metadata false
+                  cdk destroy --all --false
