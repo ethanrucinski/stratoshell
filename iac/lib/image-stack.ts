@@ -9,7 +9,7 @@ export class ImageStack extends Stack {
 
         // Get list of dockerfiles
         const dockerpath = fs
-            .readdirSync(__dirname + "/../images")
+            .readdirSync(__dirname + "/../../images")
             .filter((path) => !path.includes(".sh"));
 
         // Build task definitions for each dockerfile
