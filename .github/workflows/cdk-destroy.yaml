@@ -1,4 +1,4 @@
-name: CDK Deploy
+name: CDK Destroy
 
 # Set deployment triggers
 on: [workflow_dispatch]
@@ -9,8 +9,8 @@ permissions:
     contents: read
 
 jobs:
-    cdk-deploy:
-        name: CDK Deploy
+    cdk-destroy:
+        name: CDK Destroy
         runs-on: ubuntu-latest
         strategy:
             matrix:
@@ -34,7 +34,7 @@ jobs:
               working-directory: iac
               run: |
                   npm ci
-            - name: CDK Deploy
+            - name: CDK Destroy
               working-directory: iac
               run: |
                   cdk destroy --all --false

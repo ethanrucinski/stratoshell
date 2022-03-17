@@ -1,7 +1,11 @@
 name: CDK Deploy
 
 # Set deployment triggers
-on: [push, workflow_dispatch]
+on:
+    push:
+        paths-ignore:
+            - ".github/workflows/*"
+    workflow_dispatch:
 
 # Set github token permissions
 permissions:
