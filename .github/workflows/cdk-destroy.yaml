@@ -37,4 +37,4 @@ jobs:
             - name: CDK Destroy
               working-directory: iac
               run: |
-                  cdk destroy --all --false
+                  cdk destroy --all --force
