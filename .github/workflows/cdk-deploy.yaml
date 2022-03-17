@@ -21,6 +21,8 @@ jobs:
               with:
                   role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/Github-Actions-Role-${{ secrets.AWS_ACCOUNT_NUMBER }}
                   aws-region: ${{ matrix.region }}
+            - name: Checkout Source
+              uses: actions/checkout@v3
             - name: Setup Node
               uses: actions/setup-node@v2
               with:
