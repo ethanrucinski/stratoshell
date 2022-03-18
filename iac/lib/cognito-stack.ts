@@ -45,7 +45,7 @@ export class CognitoStack extends Stack {
         });
 
         // User pool domain
-        const domain = `auth.${this.region}.stratoshell.com`;
+        const domain = `auth.stratoshell.com`;
         const poolDomainCertificate = new acm.DnsValidatedCertificate(
             this,
             "stratoshell-pool-domain-certificate",
