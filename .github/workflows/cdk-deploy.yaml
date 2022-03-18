@@ -5,6 +5,8 @@ on:
     push:
         paths-ignore:
             - ".github/workflows/*"
+            - "bootstrapping/*"
+            - "*.md"
     workflow_dispatch:
 
 # Set github token permissions
