@@ -13,7 +13,7 @@ Resources:
                                 "Effect": "Allow",
                                 "Principal":
                                     {
-                                        "Federated": "arn:aws:iam::403707884266:oidc-provider/token.actions.githubusercontent.com",
+                                        "Federated": !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com",
                                     },
                                 "Action": "sts:AssumeRoleWithWebIdentity",
                                 "Condition":
