@@ -56,66 +56,66 @@ export class CognitoStack extends Stack {
             }
         );
 
-        this.userPoolDomain = new cognito.UserPoolDomain(
-            this,
-            "stratoshell-pool-domain",
-            {
-                customDomain: {
-                    domainName: domain,
-                    certificate: poolDomainCertificate,
-                },
-                userPool: this.userPool,
-            }
-        );
+        // this.userPoolDomain = new cognito.UserPoolDomain(
+        //     this,
+        //     "stratoshell-pool-domain",
+        //     {
+        //         customDomain: {
+        //             domainName: domain,
+        //             certificate: poolDomainCertificate,
+        //         },
+        //         userPool: this.userPool,
+        //     }
+        // );
 
-        // User pool resource server
-        const userPoolResourceServerScope = new cognito.ResourceServerScope({
-            scopeName: "stratoshell.taskApi",
-            scopeDescription: "Stratoshell task api scope",
-        });
-        this.userPoolResourceServer = new cognito.UserPoolResourceServer(
-            this,
-            "stratoshell-api-server",
-            {
-                identifier: "https://api.stratoshell.com",
-                userPoolResourceServerName: "Task API resource server",
-                scopes: [userPoolResourceServerScope],
-                userPool: this.userPool,
-            }
-        );
+        // // User pool resource server
+        // const userPoolResourceServerScope = new cognito.ResourceServerScope({
+        //     scopeName: "stratoshell.taskApi",
+        //     scopeDescription: "Stratoshell task api scope",
+        // });
+        // this.userPoolResourceServer = new cognito.UserPoolResourceServer(
+        //     this,
+        //     "stratoshell-api-server",
+        //     {
+        //         identifier: "https://api.stratoshell.com",
+        //         userPoolResourceServerName: "Task API resource server",
+        //         scopes: [userPoolResourceServerScope],
+        //         userPool: this.userPool,
+        //     }
+        // );
 
-        // User pool client
-        this.userPoolClient = new cognito.UserPoolClient(
-            this,
-            "stratoshell-client",
-            {
-                userPool: this.userPool,
-                authFlows: {
-                    userPassword: true,
-                },
-                generateSecret: true,
-                oAuth: {
-                    callbackUrls: [
-                        "http://localhost",
-                        "http://localhost:3000/callback",
-                    ],
-                    flows: {
-                        authorizationCodeGrant: true,
-                        implicitCodeGrant: true,
-                    },
-                    logoutUrls: ["http://localhost:3000/logout"],
-                    scopes: [
-                        cognito.OAuthScope.EMAIL,
-                        cognito.OAuthScope.OPENID,
-                        cognito.OAuthScope.PROFILE,
-                        cognito.OAuthScope.resourceServer(
-                            this.userPoolResourceServer,
-                            userPoolResourceServerScope
-                        ),
-                    ],
-                },
-                preventUserExistenceErrors: true,
-            }
-        );
+        // // User pool client
+        // this.userPoolClient = new cognito.UserPoolClient(
+        //     this,
+        //     "stratoshell-client",
+        //     {
+        //         userPool: this.userPool,
+        //         authFlows: {
+        //             userPassword: true,
+        //         },
+        //         generateSecret: true,
+        //         oAuth: {
+        //             callbackUrls: [
+        //                 "http://localhost",
+        //                 "http://localhost:3000/callback",
+        //             ],
+        //             flows: {
+        //                 authorizationCodeGrant: true,
+        //                 implicitCodeGrant: true,
+        //             },
+        //             logoutUrls: ["http://localhost:3000/logout"],
+        //             scopes: [
+        //                 cognito.OAuthScope.EMAIL,
+        //                 cognito.OAuthScope.OPENID,
+        //                 cognito.OAuthScope.PROFILE,
+        //                 cognito.OAuthScope.resourceServer(
+        //                     this.userPoolResourceServer,
+        //                     userPoolResourceServerScope
+        //                 ),
+        //             ],
+        //         },
+        //         preventUserExistenceErrors: true,
+        //     }
+        // );
     }
 }
