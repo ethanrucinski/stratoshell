@@ -4,6 +4,7 @@ import * as cdk from "aws-cdk-lib";
 import { NetworkStack } from "../lib/network-stack";
 import { DynamoStack } from "../lib/dynamo-stack";
 import { ImageStack } from "../lib/image-stack";
+import { CognitoStack } from "../lib/cognito-stack";
 
 const app = new cdk.App();
 
@@ -36,3 +37,8 @@ new ImageStack(app, "stratoshell-image-stack", {
         vpc: networkStack.vpc,
     },
 });
+
+// Cognito in primary region only
+if (process.env.CDK_DEFAULT_REGION == "us-east-2") {
+    new CognitoStack(app, "stratoshell-cognito-stack", appConfig);
+}

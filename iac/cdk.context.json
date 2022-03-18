@@ -4,5 +4,9 @@
     "us-east-2b",
     "us-east-2c"
   ],
-  "ami:account=403707884266:filters.image-type.0=machine:filters.name.0=amzn-ami-vpc-nat-*:filters.state.0=available:owners.0=amazon:region=us-east-2": "ami-042990f58e63bb416"
+  "ami:account=403707884266:filters.image-type.0=machine:filters.name.0=amzn-ami-vpc-nat-*:filters.state.0=available:owners.0=amazon:region=us-east-2": "ami-042990f58e63bb416",
+  "hosted-zone:account=403707884266:domainName=stratoshell.com:region=us-east-2": {
+    "Id": "/hostedzone/Z00822051VQX4U9AOBNMM",
+    "Name": "stratoshell.com."
+  }
 }
