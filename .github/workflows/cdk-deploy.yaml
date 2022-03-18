@@ -41,4 +41,4 @@ jobs:
             - name: CDK Deploy
               working-directory: iac
               run: |
-                  cdk deploy --all --require-approval never --asset-metadata false --path-metadata false
+                  cdk deploy --all --require-approval never

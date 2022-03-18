@@ -27,4 +27,12 @@ if (process.env.CDK_DEFAULT_REGION == "us-east-2") {
 }
 
 // Task and images
-new ImageStack(app, "stratoshell-image-stack", networkStack.vpc, appConfig);
+new ImageStack(app, "stratoshell-image-stack", {
+    ...appConfig,
+    ...{
+        ecrApiEndpoint: networkStack.ecrApiEndpoint,
+        ecrDkrEndpoint: networkStack.ecrDkrEndpoint,
+        s3Endpoint: networkStack.s3Endpoint,
+        vpc: networkStack.vpc,
+    },
+});
