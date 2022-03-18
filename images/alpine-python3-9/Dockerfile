@@ -11,6 +11,7 @@ RUN    apk update \
 # This image expects AUTHORIZED_KEYS environment variable to contain your ssh public key.
 
 COPY docker-entrypoint.sh /
+RUN chmod +x docker-entrypoint.sh
 
 RUN python --version
 
