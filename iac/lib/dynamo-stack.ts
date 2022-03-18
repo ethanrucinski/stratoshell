@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import { Stack, StackProps, RemovalPolicy } from "aws-cdk-lib";
+import { Stack, StackProps, RemovalPolicy, PhysicalName } from "aws-cdk-lib";
 import { aws_dynamodb as dynamo } from "aws-cdk-lib";
 import { aws_ssm as ssm } from "aws-cdk-lib";
 
@@ -19,9 +19,10 @@ export class DynamoStack extends Stack {
             billingMode: dynamo.BillingMode.PAY_PER_REQUEST,
             removalPolicy: RemovalPolicy.DESTROY,
             replicationRegions: replicaRegions,
+            tableName: PhysicalName.GENERATE_IF_NEEDED,
         });
         new ssm.StringParameter(this, "task-request-table-name", {
-            parameterName: "/stratoshell/dynamodb/task_request_table_name",
+            parameterName: "/stratoshell/dynamodb/t ask_request_table_name",
             stringValue: this.taskRequestTable.tableName,
         });
 
