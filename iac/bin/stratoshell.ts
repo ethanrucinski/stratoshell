@@ -5,6 +5,7 @@ import { NetworkStack } from "../lib/network-stack";
 import { DynamoStack } from "../lib/dynamo-stack";
 import { ImageStack } from "../lib/image-stack";
 import { CognitoStack } from "../lib/cognito-stack";
+import { ApiStack } from "../lib/api-stack";
 
 const app = new cdk.App();
 
@@ -42,3 +43,6 @@ new ImageStack(app, "stratoshell-image-stack", {
 if (process.env.CDK_DEFAULT_REGION == "us-east-2") {
     new CognitoStack(app, "stratoshell-cognito-stack", appConfig);
 }
+
+// Api stack
+new ApiStack(app, "stratoshell-api-stack", appConfig);
