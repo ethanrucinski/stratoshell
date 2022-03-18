@@ -56,17 +56,17 @@ export class CognitoStack extends Stack {
             }
         );
 
-        // this.userPoolDomain = new cognito.UserPoolDomain(
-        //     this,
-        //     "stratoshell-pool-domain",
-        //     {
-        //         customDomain: {
-        //             domainName: domain,
-        //             certificate: poolDomainCertificate,
-        //         },
-        //         userPool: this.userPool,
-        //     }
-        // );
+        this.userPoolDomain = new cognito.UserPoolDomain(
+            this,
+            "stratoshell-pool-domain",
+            {
+                customDomain: {
+                    domainName: domain,
+                    certificate: poolDomainCertificate,
+                },
+                userPool: this.userPool,
+            }
+        );
 
         // // User pool resource server
         // const userPoolResourceServerScope = new cognito.ResourceServerScope({
