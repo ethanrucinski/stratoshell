@@ -22,7 +22,7 @@ export class DynamoStack extends Stack {
             tableName: PhysicalName.GENERATE_IF_NEEDED,
         });
         new ssm.StringParameter(this, "task-request-table-name", {
-            parameterName: "/stratoshell/dynamodb/t ask_request_table_name",
+            parameterName: "/stratoshell/dynamodb/task_request_table_name",
             stringValue: this.taskRequestTable.tableName,
         });
 
