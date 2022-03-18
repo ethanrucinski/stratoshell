@@ -60,7 +60,7 @@ export class ImageStack extends Stack {
                         principals: [taskDefinition.executionRole],
                         actions: ["*"],
                         effect: iam.Effect.ALLOW,
-                        resources: ["cdk-base-*"],
+                        resources: ["*"],
                     })
                 );
 
@@ -69,7 +69,7 @@ export class ImageStack extends Stack {
                         principals: [taskDefinition.executionRole],
                         actions: ["*"],
                         effect: iam.Effect.ALLOW,
-                        resources: ["cdk-base-*"],
+                        resources: ["*"],
                     })
                 );
 
@@ -78,7 +78,7 @@ export class ImageStack extends Stack {
                         principals: [taskDefinition.executionRole],
                         actions: ["*"],
                         effect: iam.Effect.ALLOW,
-                        resources: ["cdk-base-*"],
+                        resources: ["*"],
                     })
                 );
             }
