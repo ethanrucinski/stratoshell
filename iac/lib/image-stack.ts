@@ -48,9 +48,6 @@ export class ImageStack extends Stack {
 
             taskDefinition.addContainer(`${dockerpath}-container`, {
                 image: containerImage,
-                logging: ecs.AwsLogDriver.awsLogs({
-                    streamPrefix: dockerpath,
-                }),
             });
 
             if (taskDefinition.executionRole) {
