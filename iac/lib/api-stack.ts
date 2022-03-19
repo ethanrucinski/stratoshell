@@ -40,8 +40,7 @@ export class ApiStack extends Stack {
                     command: [
                         "bash",
                         "-c",
-                        "npm install",
-                        "cp -au . /asset-output",
+                        "npm install && cp -au . /asset-output",
                     ],
                 },
             }),
