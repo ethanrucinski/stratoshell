@@ -33,7 +33,7 @@ export class ApiStack extends Stack {
 
         // Keygen Api
         this.keygenApi = new lambda.Function(this, "keygen-api", {
-            code: lambda.Code.fromAsset("../keygen-api", {
+            code: lambda.Code.fromAsset(__dirname + "/../../keygen-api", {
                 bundling: {
                     image: lambda.Runtime.NODEJS_14_X.bundlingImage,
                     command: ["npm run package"],
