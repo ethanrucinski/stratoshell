@@ -36,7 +36,12 @@ export class ApiStack extends Stack {
             code: lambda.Code.fromAsset(__dirname + "/../../keygen-api", {
                 bundling: {
                     image: lambda.Runtime.NODEJS_14_X.bundlingImage,
-                    command: ["bash", "-c", "npm install"],
+                    command: [
+                        "sudo npm cache clean --force",
+                        "bash",
+                        "-c",
+                        "npm install",
+                    ],
                 },
             }),
             handler: "index.handler",
