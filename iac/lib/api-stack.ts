@@ -2,10 +2,14 @@ import { Construct } from "constructs";
 import { Stack, StackProps, Duration } from "aws-cdk-lib";
 import { aws_sqs as sqs } from "aws-cdk-lib";
 import { aws_lambda as lambda } from "aws-cdk-lib";
+import { aws_route53 as route53 } from "aws-cdk-lib";
+import { aws_certificatemanager as acm } from "aws-cdk-lib";
+import { aws_apigateway as apigateway } from "aws-cdk-lib";
 
 export class ApiStack extends Stack {
     public readonly containerRequestQueue: sqs.Queue;
     public readonly connectionStatusQueue: sqs.Queue;
+    public readonly api: apigateway.RestApi;
     public readonly keygenApi: lambda.Function;
 
     constructor(scope: Construct, id: string, props: StackProps) {
@@ -31,6 +35,36 @@ export class ApiStack extends Stack {
             }
         );
 
+        // Look up hosted zone
+        const hostedZone = route53.HostedZone.fromLookup(
+            this,
+            "stratoshell-hosted-zone",
+            {
+                domainName: "stratoshell.com",
+            }
+        );
+
+        // User pool domain
+        const domain = `api.${this.region}.stratoshell.com`;
+        const apiDomainCertificate = new acm.DnsValidatedCertificate(
+            this,
+            "stratoshell-api-domain-certificate",
+            {
+                domainName: domain,
+                hostedZone: hostedZone,
+                region: "us-east-1",
+            }
+        );
+
+        // Api gateway
+        this.api = new apigateway.RestApi(this, "api", {
+            domainName: {
+                domainName: domain,
+                certificate: apiDomainCertificate,
+                endpointType: apigateway.EndpointType.REGIONAL,
+            },
+        });
+
         // Keygen Api
         this.keygenApi = new lambda.Function(this, "keygen-api", {
             code: lambda.Code.fromAsset(__dirname + "/../../keygen-api", {
@@ -46,6 +80,10 @@ export class ApiStack extends Stack {
             }),
             handler: "index.handler",
             runtime: lambda.Runtime.NODEJS_14_X,
+            environment: {
+                CONTAINER_REQUEST_QUEUE_NAME:
+                    this.containerRequestQueue.queueName,
+            },
         });
     }
 }
