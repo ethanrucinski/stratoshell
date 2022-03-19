@@ -1,10 +1,12 @@
 import { Construct } from "constructs";
 import { Stack, StackProps, Duration } from "aws-cdk-lib";
 import { aws_sqs as sqs } from "aws-cdk-lib";
+import { aws_lambda as lambda } from "aws-cdk-lib";
 
 export class ApiStack extends Stack {
     public readonly containerRequestQueue: sqs.Queue;
     public readonly connectionStatusQueue: sqs.Queue;
+    public readonly keygenApi: lambda.Function;
 
     constructor(scope: Construct, id: string, props: StackProps) {
         super(scope, id, props);
@@ -28,5 +30,17 @@ export class ApiStack extends Stack {
                 visibilityTimeout: Duration.seconds(300),
             }
         );
+
+        // Keygen Api
+        this.keygenApi = new lambda.Function(this, "keygen-api", {
+            code: lambda.Code.fromAsset("../keygen-api", {
+                bundling: {
+                    image: lambda.Runtime.NODEJS_14_X.bundlingImage,
+                    command: ["npm run package"],
+                },
+            }),
+            handler: "index.handler",
+            runtime: lambda.Runtime.NODEJS_14_X,
+        });
     }
 }

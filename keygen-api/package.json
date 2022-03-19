@@ -1,0 +1,22 @@
+{
+    "name": "keygen-api",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "jest --config ./jest.config.json",
+        "test:watch": "npm run test -- --watch",
+        "package": "npm install"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@aws-sdk/client-ecs": "^3.54.1",
+        "@aws-sdk/client-sqs": "^3.54.1",
+        "sshpk": "^1.17.0",
+        "uuid": "^8.3.2"
+    },
+    "devDependencies": {
+        "jest": "^27.5.1"
+    }
+}
