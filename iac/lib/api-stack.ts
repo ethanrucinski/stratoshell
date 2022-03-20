@@ -5,13 +5,14 @@ import { aws_lambda as lambda } from "aws-cdk-lib";
 import { aws_route53 as route53 } from "aws-cdk-lib";
 import { aws_route53_targets as targets } from "aws-cdk-lib";
 import { aws_certificatemanager as acm } from "aws-cdk-lib";
-import { aws_apigateway as apigateway } from "aws-cdk-lib";
+//import { aws_apigateway as apigateway } from "aws-cdk-lib";
+import { aws_apigatewayv2 as apigateway } from "aws-cdk-lib";
 import { aws_cognito as cognito } from "aws-cdk-lib";
 
 export class ApiStack extends Stack {
     public readonly containerRequestQueue: sqs.Queue;
     public readonly connectionStatusQueue: sqs.Queue;
-    public readonly api: apigateway.RestApi;
+    //public readonly api: apigateway.RestApi;
     public readonly keygenApi: lambda.Function;
 
     constructor(scope: Construct, id: string, props: StackProps) {
@@ -58,40 +59,152 @@ export class ApiStack extends Stack {
             }
         );
 
-        // Api gateway
-        this.api = new apigateway.RestApi(this, "api", {
-            domainName: {
-                domainName: domain,
-                certificate: apiDomainCertificate,
-                endpointType: apigateway.EndpointType.REGIONAL,
-            },
-            endpointConfiguration: {
-                types: [apigateway.EndpointType.REGIONAL],
-            },
+        // // Api gateway
+        // this.api = new apigateway.RestApi(this, "api", {
+        //     domainName: {
+        //         domainName: domain,
+        //         certificate: apiDomainCertificate,
+        //         endpointType: apigateway.EndpointType.REGIONAL,
+        //     },
+        //     endpointConfiguration: {
+        //         types: [apigateway.EndpointType.REGIONAL],
+        //     },
+        // });
+        // const v1 = this.api.root.addResource("v1");
+        // new route53.RecordSet(this, "api-recordset", {
+        //     recordType: route53.RecordType.A,
+        //     target: route53.RecordTarget.fromAlias(
+        //         new targets.ApiGateway(this.api)
+        //     ),
+        //     recordName: domain,
+        //     zone: hostedZone,
+        // });
+
+        // // Authorizer
+        // const authorizer = new apigateway.CognitoUserPoolsAuthorizer(
+        //     this,
+        //     "api-authorizer",
+        //     {
+        //         cognitoUserPools: [
+        //             cognito.UserPool.fromUserPoolId(
+        //                 this,
+        //                 "stratoshell-user-pool",
+        //                 "stratoshell-user-pool"
+        //             ),
+        //         ],
+        //         identitySource:
+        //             apigateway.IdentitySource.header("Authorization"),
+        //     }
+        // );
+
+        const userPool = cognito.UserPool.fromUserPoolId(
+            this,
+            "stratoshell-user-pool",
+            "stratoshell-user-pool"
+        );
+
+        const api = new apigateway.CfnApi(this, "api", {
+            protocolType: "HTTP",
         });
-        const v1 = this.api.root.addResource("v1");
-        new route53.RecordSet(this, "api-recordset", {
-            recordType: route53.RecordType.A,
-            target: route53.RecordTarget.fromAlias(
-                new targets.ApiGateway(this.api)
-            ),
-            recordName: domain,
-            zone: hostedZone,
+        const stage = new apigateway.CfnStage(this, "api-stage", {
+            apiId: api.ref,
+            autoDeploy: true,
+            stageName: "prod",
+        });
+        const apiDomainName = new apigateway.CfnDomainName(
+            this,
+            "api-domain-name",
+            {
+                domainName: domain,
+                domainNameConfigurations: [
+                    {
+                        certificateArn: apiDomainCertificate.certificateArn,
+                        endpointType: "REGIONAL",
+                    },
+                ],
+            }
+        );
+        const apiGatewayMapping = new apigateway.CfnApiMapping(
+            this,
+            "api-mapping",
+            {
+                domainName: domain,
+                apiId: api.ref,
+                stage: stage.ref,
+            }
+        );
+        new route53.CfnRecordSet(this, "api-recordset", {
+            aliasTarget: {
+                dnsName: apiDomainName.attrRegionalDomainName,
+                hostedZoneId: apiDomainName.attrRegionalHostedZoneId,
+                evaluateTargetHealth: true,
+            },
+            hostedZoneId: hostedZone.hostedZoneId,
+            type: route53.RecordType.A,
+            name: domain,
         });
 
-        // Authorizer
-        const authorizer = new apigateway.CognitoUserPoolsAuthorizer(
+        // User pool resource server
+        const userPoolResourceServerScope = new cognito.ResourceServerScope({
+            scopeName: "stratoshell.taskApi",
+            scopeDescription: "Stratoshell task api scope",
+        });
+        const userPoolResourceServer = new cognito.UserPoolResourceServer(
+            this,
+            "stratoshell-api-server",
+            {
+                identifier: "https://api.stratoshell.com",
+                userPoolResourceServerName: "Task API resource server",
+                scopes: [userPoolResourceServerScope],
+                userPool: userPool,
+            }
+        );
+
+        // User pool client
+        const userPoolClient = new cognito.UserPoolClient(
+            this,
+            "stratoshell-client",
+            {
+                userPool: userPool,
+                authFlows: {
+                    userPassword: true,
+                },
+                generateSecret: true,
+                oAuth: {
+                    callbackUrls: [
+                        "http://localhost",
+                        "http://localhost:3000/callback",
+                    ],
+                    flows: {
+                        authorizationCodeGrant: true,
+                        implicitCodeGrant: true,
+                    },
+                    logoutUrls: ["http://localhost:3000/logout"],
+                    scopes: [
+                        cognito.OAuthScope.EMAIL,
+                        cognito.OAuthScope.OPENID,
+                        cognito.OAuthScope.PROFILE,
+                        cognito.OAuthScope.resourceServer(
+                            userPoolResourceServer,
+                            userPoolResourceServerScope
+                        ),
+                    ],
+                },
+                preventUserExistenceErrors: true,
+            }
+        );
+        const authorizer = new apigateway.CfnAuthorizer(
             this,
             "api-authorizer",
             {
-                cognitoUserPools: [
-                    cognito.UserPool.fromUserPoolId(
-                        this,
-                        "stratoshell-user-pool",
-                        "stratoshell-user-pool"
-                    ),
-                ],
-                identitySource: "method.request.header.Authorization",
+                apiId: api.ref,
+                authorizerType: "JWT",
+                identitySource: ["$request.header.Authorization"],
+                jwtConfiguration: {
+                    audience: [userPoolClient.userPoolClientId],
+                    issuer: `https://cognigo-idp.us-east-2.amazonaws.com/${userPool.userPoolId}`,
+                },
+                name: "stratoshell-api-authorizer",
             }
         );
 
@@ -116,19 +229,32 @@ export class ApiStack extends Stack {
             },
         });
         this.containerRequestQueue.grantSendMessages(this.keygenApi);
-
-        const keygen = v1.addResource("keygen");
-        keygen.addMethod(
-            "POST",
-            new apigateway.LambdaIntegration(this.keygenApi),
+        const keygenApiIntegration = new apigateway.CfnIntegration(
+            this,
+            "keygen-integration",
             {
-                apiKeyRequired: true,
-                authorizationScopes: [
-                    "https://api.stratoshell.com/stratoshell.taskApi",
-                ],
-                authorizationType: apigateway.AuthorizationType.COGNITO,
-                authorizer: authorizer,
+                apiId: api.ref,
+                integrationMethod: "POST",
+                integrationType: "AWS_PROXY",
+                integrationUri: this.keygenApi.functionArn,
+                payloadFormatVersion: "2.0",
             }
         );
+        new apigateway.CfnRoute(this, "keygen-route", {
+            apiId: api.ref,
+            routeKey: "keygen",
+            target: "integrations/" + keygenApiIntegration.ref,
+            authorizationScopes: [
+                "https://api.stratoshell.com/stratoshell.taskApi",
+            ],
+            authorizationType: "JWT",
+            authorizerId: authorizer.ref,
+        });
+        new lambda.CfnPermission(this, "keygen-api-permission", {
+            functionName: this.keygenApi.functionName,
+            action: "lambda:InvokeFunction",
+            principal: "apigateway.amazonaws.com",
+            sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:*`,
+        });
     }
 }

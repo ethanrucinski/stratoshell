@@ -8,8 +8,6 @@ import { aws_certificatemanager as acm } from "aws-cdk-lib";
 export class CognitoStack extends Stack {
     public readonly userPool: cognito.UserPool;
     public readonly userPoolDomain: cognito.UserPoolDomain;
-    public readonly userPoolResourceServer: cognito.UserPoolResourceServer;
-    public readonly userPoolClient: cognito.UserPoolClient;
 
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
@@ -70,22 +68,6 @@ export class CognitoStack extends Stack {
             }
         );
 
-        // User pool resource server
-        const userPoolResourceServerScope = new cognito.ResourceServerScope({
-            scopeName: "stratoshell.taskApi",
-            scopeDescription: "Stratoshell task api scope",
-        });
-        this.userPoolResourceServer = new cognito.UserPoolResourceServer(
-            this,
-            "stratoshell-api-server",
-            {
-                identifier: "https://api.stratoshell.com",
-                userPoolResourceServerName: "Task API resource server",
-                scopes: [userPoolResourceServerScope],
-                userPool: this.userPool,
-            }
-        );
-
         // Cognito Route53 entry
         new route53.RecordSet(this, "cognito-recordset", {
             recordType: route53.RecordType.A,
@@ -95,39 +77,5 @@ export class CognitoStack extends Stack {
             recordName: domain,
             zone: hostedZone,
         });
-
-        // User pool client
-        this.userPoolClient = new cognito.UserPoolClient(
-            this,
-            "stratoshell-client",
-            {
-                userPool: this.userPool,
-                authFlows: {
-                    userPassword: true,
-                },
-                generateSecret: true,
-                oAuth: {
-                    callbackUrls: [
-                        "http://localhost",
-                        "http://localhost:3000/callback",
-                    ],
-                    flows: {
-                        authorizationCodeGrant: true,
-                        implicitCodeGrant: true,
-                    },
-                    logoutUrls: ["http://localhost:3000/logout"],
-                    scopes: [
-                        cognito.OAuthScope.EMAIL,
-                        cognito.OAuthScope.OPENID,
-                        cognito.OAuthScope.PROFILE,
-                        cognito.OAuthScope.resourceServer(
-                            this.userPoolResourceServer,
-                            userPoolResourceServerScope
-                        ),
-                    ],
-                },
-                preventUserExistenceErrors: true,
-            }
-        );
     }
 }
