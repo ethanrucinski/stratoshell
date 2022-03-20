@@ -47,6 +47,11 @@ const cognitoStack = new CognitoStack(
 );
 
 // Api stack
-const apiStack = new ApiStack(app, "stratoshell-api-stack", appConfig);
+const apiStack = new ApiStack(
+    app,
+    "stratoshell-api-stack",
+    appConfig,
+    cognitoStack.userPool
+);
 
 apiStack.addDependency(cognitoStack);

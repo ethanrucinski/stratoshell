@@ -15,7 +15,12 @@ export class ApiStack extends Stack {
     //public readonly api: apigateway.RestApi;
     public readonly keygenApi: lambda.Function;
 
-    constructor(scope: Construct, id: string, props: StackProps) {
+    constructor(
+        scope: Construct,
+        id: string,
+        props: StackProps,
+        userPool: cognito.UserPool
+    ) {
         super(scope, id, props);
 
         // Make queues
@@ -97,14 +102,9 @@ export class ApiStack extends Stack {
         //     }
         // );
 
-        const userPool = cognito.UserPool.fromUserPoolId(
-            this,
-            "stratoshell-user-pool",
-            "stratoshell-user-pool"
-        );
-
         const api = new apigateway.CfnApi(this, "api", {
             protocolType: "HTTP",
+            name: "stratoshell-api",
         });
         const stage = new apigateway.CfnStage(this, "api-stage", {
             apiId: api.ref,
@@ -133,6 +133,7 @@ export class ApiStack extends Stack {
                 stage: stage.ref,
             }
         );
+        apiGatewayMapping.addDependsOn(apiDomainName);
         new route53.CfnRecordSet(this, "api-recordset", {
             aliasTarget: {
                 dnsName: apiDomainName.attrRegionalDomainName,
@@ -202,7 +203,7 @@ export class ApiStack extends Stack {
                 identitySource: ["$request.header.Authorization"],
                 jwtConfiguration: {
                     audience: [userPoolClient.userPoolClientId],
-                    issuer: `https://cognigo-idp.us-east-2.amazonaws.com/${userPool.userPoolId}`,
+                    issuer: userPool.userPoolProviderUrl,
                 },
                 name: "stratoshell-api-authorizer",
             }
@@ -227,6 +228,8 @@ export class ApiStack extends Stack {
                 CONTAINER_REQUEST_QUEUE_NAME:
                     this.containerRequestQueue.queueName,
             },
+            memorySize: 192,
+            timeout: Duration.minutes(5)
         });
         this.containerRequestQueue.grantSendMessages(this.keygenApi);
         const keygenApiIntegration = new apigateway.CfnIntegration(
@@ -242,7 +245,7 @@ export class ApiStack extends Stack {
         );
         new apigateway.CfnRoute(this, "keygen-route", {
             apiId: api.ref,
-            routeKey: "keygen",
+            routeKey: "POST /keygen",
             target: "integrations/" + keygenApiIntegration.ref,
             authorizationScopes: [
                 "https://api.stratoshell.com/stratoshell.taskApi",
