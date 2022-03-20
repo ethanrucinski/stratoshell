@@ -2,6 +2,7 @@ import { Construct } from "constructs";
 import { Stack, StackProps, Duration, RemovalPolicy } from "aws-cdk-lib";
 import { aws_cognito as cognito } from "aws-cdk-lib";
 import { aws_route53 as route53 } from "aws-cdk-lib";
+import { aws_route53_targets as targets } from "aws-cdk-lib";
 import { aws_certificatemanager as acm } from "aws-cdk-lib";
 
 export class CognitoStack extends Stack {
@@ -84,6 +85,16 @@ export class CognitoStack extends Stack {
                 userPool: this.userPool,
             }
         );
+
+        // Cognito Route53 entry
+        new route53.RecordSet(this, "cognito-recordset", {
+            recordType: route53.RecordType.A,
+            target: route53.RecordTarget.fromAlias(
+                new targets.UserPoolDomainTarget(this.userPoolDomain)
+            ),
+            recordName: domain,
+            zone: hostedZone,
+        });
 
         // User pool client
         this.userPoolClient = new cognito.UserPoolClient(

@@ -45,4 +45,4 @@ if (process.env.CDK_DEFAULT_REGION == "us-east-2") {
 }
 
 // Api stack
-//new ApiStack(app, "stratoshell-api-stack", appConfig);
+new ApiStack(app, "stratoshell-api-stack", appConfig);

@@ -3,6 +3,7 @@ import { Stack, StackProps, Duration } from "aws-cdk-lib";
 import { aws_sqs as sqs } from "aws-cdk-lib";
 import { aws_lambda as lambda } from "aws-cdk-lib";
 import { aws_route53 as route53 } from "aws-cdk-lib";
+import { aws_route53_targets as targets } from "aws-cdk-lib";
 import { aws_certificatemanager as acm } from "aws-cdk-lib";
 import { aws_apigateway as apigateway } from "aws-cdk-lib";
 import { aws_cognito as cognito } from "aws-cdk-lib";
@@ -45,15 +46,15 @@ export class ApiStack extends Stack {
             }
         );
 
-        // User pool domain
-        const domain = `api.${this.region}.stratoshell.com`;
+        // API domain
+        const domain = `api.stratoshell.com`;
         const apiDomainCertificate = new acm.DnsValidatedCertificate(
             this,
             "stratoshell-api-domain-certificate",
             {
                 domainName: domain,
                 hostedZone: hostedZone,
-                region: "us-east-1",
+                region: this.region,
             }
         );
 
@@ -64,8 +65,19 @@ export class ApiStack extends Stack {
                 certificate: apiDomainCertificate,
                 endpointType: apigateway.EndpointType.REGIONAL,
             },
+            endpointConfiguration: {
+                types: [apigateway.EndpointType.REGIONAL],
+            },
         });
         const v1 = this.api.root.addResource("v1");
+        new route53.RecordSet(this, "api-recordset", {
+            recordType: route53.RecordType.A,
+            target: route53.RecordTarget.fromAlias(
+                new targets.ApiGateway(this.api)
+            ),
+            recordName: domain,
+            zone: hostedZone,
+        });
 
         // Authorizer
         const authorizer = new apigateway.CognitoUserPoolsAuthorizer(
@@ -79,7 +91,7 @@ export class ApiStack extends Stack {
                         "stratoshell-user-pool"
                     ),
                 ],
-                identitySource: "$request.header.Authorization",
+                identitySource: "method.request.header.Authorization",
             }
         );
 
@@ -103,6 +115,7 @@ export class ApiStack extends Stack {
                     this.containerRequestQueue.queueName,
             },
         });
+        this.containerRequestQueue.grantSendMessages(this.keygenApi);
 
         const keygen = v1.addResource("keygen");
         keygen.addMethod(
