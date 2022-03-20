@@ -39,10 +39,14 @@ new ImageStack(app, "stratoshell-image-stack", {
     },
 });
 
-// Cognito in primary region only
-if (process.env.CDK_DEFAULT_REGION == "us-east-2") {
-    new CognitoStack(app, "stratoshell-cognito-stack", appConfig);
-}
+// Cognito
+const cognitoStack = new CognitoStack(
+    app,
+    "stratoshell-cognito-stack",
+    appConfig
+);
 
 // Api stack
-new ApiStack(app, "stratoshell-api-stack", appConfig);
+const apiStack = new ApiStack(app, "stratoshell-api-stack", appConfig);
+
+apiStack.addDependency(cognitoStack);
