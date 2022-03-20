@@ -5,6 +5,7 @@ import { aws_lambda as lambda } from "aws-cdk-lib";
 import { aws_route53 as route53 } from "aws-cdk-lib";
 import { aws_certificatemanager as acm } from "aws-cdk-lib";
 import { aws_apigateway as apigateway } from "aws-cdk-lib";
+import { aws_cognito as cognito } from "aws-cdk-lib";
 
 export class ApiStack extends Stack {
     public readonly containerRequestQueue: sqs.Queue;
@@ -64,6 +65,23 @@ export class ApiStack extends Stack {
                 endpointType: apigateway.EndpointType.REGIONAL,
             },
         });
+        const v1 = this.api.root.addResource("v1");
+
+        // Authorizer
+        const authorizer = new apigateway.CognitoUserPoolsAuthorizer(
+            this,
+            "api-authorizer",
+            {
+                cognitoUserPools: [
+                    cognito.UserPool.fromUserPoolId(
+                        this,
+                        "stratoshell-user-pool",
+                        "stratoshell-user-pool"
+                    ),
+                ],
+                identitySource: "$request.header.Authorization",
+            }
+        );
 
         // Keygen Api
         this.keygenApi = new lambda.Function(this, "keygen-api", {
@@ -85,5 +103,19 @@ export class ApiStack extends Stack {
                     this.containerRequestQueue.queueName,
             },
         });
+
+        const keygen = v1.addResource("keygen");
+        keygen.addMethod(
+            "POST",
+            new apigateway.LambdaIntegration(this.keygenApi),
+            {
+                apiKeyRequired: true,
+                authorizationScopes: [
+                    "https://api.stratoshell.com/stratoshell.taskApi",
+                ],
+                authorizationType: apigateway.AuthorizationType.COGNITO,
+                authorizer: authorizer,
+            }
+        );
     }
 }

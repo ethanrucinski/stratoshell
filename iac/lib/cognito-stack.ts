@@ -24,6 +24,7 @@ export class CognitoStack extends Stack {
 
         // User pool
         this.userPool = new cognito.UserPool(this, "stratoshell-pool", {
+            userPoolName: "stratoshell-user-pool",
             accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
             signInAliases: { email: true },
             passwordPolicy: {
