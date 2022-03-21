@@ -3,11 +3,10 @@ import { Stack, StackProps, Duration } from "aws-cdk-lib";
 import { aws_sqs as sqs } from "aws-cdk-lib";
 import { aws_lambda as lambda } from "aws-cdk-lib";
 import { aws_route53 as route53 } from "aws-cdk-lib";
-import { aws_route53_targets as targets } from "aws-cdk-lib";
 import { aws_certificatemanager as acm } from "aws-cdk-lib";
-//import { aws_apigateway as apigateway } from "aws-cdk-lib";
 import { aws_apigatewayv2 as apigateway } from "aws-cdk-lib";
 import { aws_cognito as cognito } from "aws-cdk-lib";
+import { aws_iam as iam } from "aws-cdk-lib";
 
 export class ApiStack extends Stack {
     public readonly containerRequestQueue: sqs.Queue;
@@ -63,44 +62,6 @@ export class ApiStack extends Stack {
                 region: this.region,
             }
         );
-
-        // // Api gateway
-        // this.api = new apigateway.RestApi(this, "api", {
-        //     domainName: {
-        //         domainName: domain,
-        //         certificate: apiDomainCertificate,
-        //         endpointType: apigateway.EndpointType.REGIONAL,
-        //     },
-        //     endpointConfiguration: {
-        //         types: [apigateway.EndpointType.REGIONAL],
-        //     },
-        // });
-        // const v1 = this.api.root.addResource("v1");
-        // new route53.RecordSet(this, "api-recordset", {
-        //     recordType: route53.RecordType.A,
-        //     target: route53.RecordTarget.fromAlias(
-        //         new targets.ApiGateway(this.api)
-        //     ),
-        //     recordName: domain,
-        //     zone: hostedZone,
-        // });
-
-        // // Authorizer
-        // const authorizer = new apigateway.CognitoUserPoolsAuthorizer(
-        //     this,
-        //     "api-authorizer",
-        //     {
-        //         cognitoUserPools: [
-        //             cognito.UserPool.fromUserPoolId(
-        //                 this,
-        //                 "stratoshell-user-pool",
-        //                 "stratoshell-user-pool"
-        //             ),
-        //         ],
-        //         identitySource:
-        //             apigateway.IdentitySource.header("Authorization"),
-        //     }
-        // );
 
         const api = new apigateway.CfnApi(this, "api", {
             protocolType: "HTTP",
@@ -229,9 +190,20 @@ export class ApiStack extends Stack {
                     this.containerRequestQueue.queueName,
             },
             memorySize: 192,
-            timeout: Duration.minutes(5)
+            timeout: Duration.minutes(5),
         });
         this.containerRequestQueue.grantSendMessages(this.keygenApi);
+        this.keygenApi.addToRolePolicy(
+            new iam.PolicyStatement({
+                resources: ["*"],
+                effect: iam.Effect.ALLOW,
+                actions: [
+                    "ecs:DescribeTasks",
+                    "ecs:ListTaskDefinitions",
+                    "ecs:DescribeTaskDefinition",
+                ],
+            })
+        );
         const keygenApiIntegration = new apigateway.CfnIntegration(
             this,
             "keygen-integration",
