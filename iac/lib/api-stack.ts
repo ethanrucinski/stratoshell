@@ -7,18 +7,25 @@ import { aws_certificatemanager as acm } from "aws-cdk-lib";
 import { aws_apigatewayv2 as apigateway } from "aws-cdk-lib";
 import { aws_cognito as cognito } from "aws-cdk-lib";
 import { aws_iam as iam } from "aws-cdk-lib";
+import { aws_ec2 as ec2 } from "aws-cdk-lib";
+import { aws_ssm as ssm } from "aws-cdk-lib";
+import { aws_ecs as ecs } from "aws-cdk-lib";
+import { aws_lambda_event_sources as eventSource } from "aws-cdk-lib";
 
 export class ApiStack extends Stack {
     public readonly containerRequestQueue: sqs.Queue;
     public readonly connectionStatusQueue: sqs.Queue;
-    //public readonly api: apigateway.RestApi;
     public readonly keygenApi: lambda.Function;
+    public readonly taskBuilder: lambda.Function;
 
     constructor(
         scope: Construct,
         id: string,
         props: StackProps,
-        userPool: cognito.UserPool
+        userPool: cognito.UserPool,
+        vpc: ec2.Vpc,
+        cluster: ecs.Cluster,
+        taskSecurityGroup: ec2.SecurityGroup
     ) {
         super(scope, id, props);
 
@@ -231,5 +238,41 @@ export class ApiStack extends Stack {
             principal: "apigateway.amazonaws.com",
             sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:*`,
         });
+
+        // Task Builder Lambda
+        const taskRequestTableName =
+            ssm.StringParameter.fromStringParameterName(
+                this,
+                "task-request-table-name",
+                "/stratoshell/dynamodb/task_request_table_name"
+            );
+        this.taskBuilder = new lambda.Function(this, "task-builder", {
+            code: lambda.Code.fromAsset(__dirname + "/../../task-builder", {
+                bundling: {
+                    image: lambda.Runtime.NODEJS_14_X.bundlingImage,
+                    user: "root",
+                    command: [
+                        "bash",
+                        "-c",
+                        "npm install && cp -au . /asset-output",
+                    ],
+                },
+            }),
+            handler: "index.handler",
+            runtime: lambda.Runtime.NODEJS_14_X,
+            environment: {
+                TASK_REQUEST_TABLE_NAME: taskRequestTableName.stringValue,
+                CLUSTER_NAME: cluster.clusterName,
+                ECS_TASK_SECURITY_GROUP_ID: taskSecurityGroup.securityGroupId,
+                SUBNET_LIST: vpc.isolatedSubnets
+                    .map((subnet) => subnet.subnetId)
+                    .join(","),
+            },
+            memorySize: 128,
+            timeout: Duration.minutes(1),
+        });
+        this.taskBuilder.addEventSource(
+            new eventSource.SqsEventSource(this.containerRequestQueue)
+        );
     }
 }

@@ -14,6 +14,7 @@ export interface ImageStackProps extends StackProps {
 
 export class ImageStack extends Stack {
     public readonly cluster: ecs.Cluster;
+    public readonly taskSecurityGroup: ec2.SecurityGroup;
 
     constructor(scope: Construct, id: string, props: ImageStackProps) {
         super(scope, id, props);
@@ -23,6 +24,15 @@ export class ImageStack extends Stack {
             vpc: props.vpc,
             enableFargateCapacityProviders: true,
         });
+
+        this.taskSecurityGroup = new ec2.SecurityGroup(
+            this,
+            "task-security-group",
+            {
+                vpc: props.vpc,
+                allowAllOutbound: true,
+            }
+        );
 
         // Get list of dockerfiles
         const dockerpath = fs

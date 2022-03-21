@@ -29,7 +29,7 @@ if (process.env.CDK_DEFAULT_REGION == "us-east-2") {
 }
 
 // Task and images
-new ImageStack(app, "stratoshell-image-stack", {
+const imageStack = new ImageStack(app, "stratoshell-image-stack", {
     ...appConfig,
     ...{
         ecrApiEndpoint: networkStack.ecrApiEndpoint,
@@ -51,7 +51,12 @@ const apiStack = new ApiStack(
     app,
     "stratoshell-api-stack",
     appConfig,
-    cognitoStack.userPool
+    cognitoStack.userPool,
+    networkStack.vpc,
+    imageStack.cluster,
+    imageStack.taskSecurityGroup
 );
 
 apiStack.addDependency(cognitoStack);
+apiStack.addDependency(networkStack);
+apiStack.addDependency(imageStack);
