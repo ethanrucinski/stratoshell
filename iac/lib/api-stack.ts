@@ -30,6 +30,9 @@ export class ApiStack extends Stack {
         super(scope, id, props);
 
         // Make queues
+        const deadRequestQueue = new sqs.Queue(this, "dead-request-queue", {
+            fifo: true,
+        });
         this.containerRequestQueue = new sqs.Queue(
             this,
             "container-request-queue",
@@ -37,7 +40,11 @@ export class ApiStack extends Stack {
                 contentBasedDeduplication: true,
                 fifo: true,
                 retentionPeriod: Duration.seconds(7200),
-                visibilityTimeout: Duration.seconds(300),
+                visibilityTimeout: Duration.seconds(120),
+                deadLetterQueue: {
+                    queue: deadRequestQueue,
+                    maxReceiveCount: 3,
+                },
             }
         );
         this.connectionStatusQueue = new sqs.Queue(
@@ -273,6 +280,22 @@ export class ApiStack extends Stack {
         });
         this.taskBuilder.addEventSource(
             new eventSource.SqsEventSource(this.containerRequestQueue)
+        );
+        this.taskBuilder.addToRolePolicy(
+            new iam.PolicyStatement({
+                resources: ["*"],
+                effect: iam.Effect.ALLOW,
+                actions: [
+                    "ssm:PutParameter",
+                    "dynamodb:ConditionCheckItem",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "ecs:RunTask",
+                    "iam:PassRole",
+                ],
+            })
         );
     }
 }

@@ -7,6 +7,7 @@ export class NetworkStack extends Stack {
     public readonly ecrApiEndpoint: ec2.InterfaceVpcEndpoint;
     public readonly ecrDkrEndpoint: ec2.InterfaceVpcEndpoint;
     public readonly s3Endpoint: ec2.GatewayVpcEndpoint;
+    public readonly taskSecurityGroup: ec2.SecurityGroup;
 
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
@@ -47,6 +48,15 @@ export class NetworkStack extends Stack {
             {
                 vpc: this.vpc,
                 service: ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER,
+            }
+        );
+
+        this.taskSecurityGroup = new ec2.SecurityGroup(
+            this,
+            "task-security-group",
+            {
+                vpc: this.vpc,
+                allowAllOutbound: true,
             }
         );
     }

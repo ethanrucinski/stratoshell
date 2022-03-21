@@ -52,11 +52,7 @@ const apiStack = new ApiStack(
     "stratoshell-api-stack",
     appConfig,
     cognitoStack.userPool,
-    networkStack.vpc,
+    imageStack.vpc,
     imageStack.cluster,
-    imageStack.taskSecurityGroup
+    networkStack.taskSecurityGroup
 );
-
-apiStack.addDependency(cognitoStack);
-apiStack.addDependency(networkStack);
-apiStack.addDependency(imageStack);
