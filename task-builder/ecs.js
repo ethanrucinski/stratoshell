@@ -1,8 +1,4 @@
-const {
-    ECSClient,
-    RunTaskCommand,
-    CapacityProviderStrategyItem,
-} = require("@aws-sdk/client-ecs");
+const { ECSClient, RunTaskCommand } = require("@aws-sdk/client-ecs");
 
 exports.createTask = function (
     publicKey,
