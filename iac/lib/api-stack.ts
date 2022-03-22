@@ -11,12 +11,15 @@ import { aws_ec2 as ec2 } from "aws-cdk-lib";
 import { aws_ssm as ssm } from "aws-cdk-lib";
 import { aws_ecs as ecs } from "aws-cdk-lib";
 import { aws_lambda_event_sources as eventSource } from "aws-cdk-lib";
+import { aws_events as events } from "aws-cdk-lib";
+import { aws_events_targets as targets } from "aws-cdk-lib";
 
 export class ApiStack extends Stack {
     public readonly containerRequestQueue: sqs.Queue;
     public readonly connectionStatusQueue: sqs.Queue;
     public readonly keygenApi: lambda.Function;
     public readonly taskBuilder: lambda.Function;
+    public readonly taskStatus: lambda.Function;
 
     constructor(
         scope: Construct,
@@ -275,7 +278,7 @@ export class ApiStack extends Stack {
                     .map((subnet) => subnet.subnetId)
                     .join(","),
             },
-            memorySize: 128,
+            memorySize: 192,
             timeout: Duration.minutes(1),
         });
         this.taskBuilder.addEventSource(
@@ -288,12 +291,63 @@ export class ApiStack extends Stack {
                 actions: [
                     "ssm:PutParameter",
                     "dynamodb:ConditionCheckItem",
-                    "dynamodb:DeleteItem",
                     "dynamodb:GetItem",
                     "dynamodb:PutItem",
                     "dynamodb:UpdateItem",
                     "ecs:RunTask",
                     "iam:PassRole",
+                ],
+            })
+        );
+
+        // Task Status Lambda
+        this.taskStatus = new lambda.Function(this, "task-status", {
+            code: lambda.Code.fromAsset(__dirname + "/../../task-status", {
+                bundling: {
+                    image: lambda.Runtime.NODEJS_14_X.bundlingImage,
+                    user: "root",
+                    command: [
+                        "bash",
+                        "-c",
+                        "npm install && cp -au . /asset-output",
+                    ],
+                },
+            }),
+            handler: "index.handler",
+            runtime: lambda.Runtime.NODEJS_14_X,
+            environment: {
+                TASK_REQUEST_TABLE_NAME: taskRequestTableName.stringValue,
+                CONNECTION_STATUS_QUEUE_NAME:
+                    this.connectionStatusQueue.queueName,
+            },
+            memorySize: 192,
+            timeout: Duration.seconds(180),
+        });
+        new events.Rule(this, "task-state-change-rule", {
+            eventPattern: {
+                source: ["aws.ecs"],
+                detailType: [
+                    "ECS Task State Change",
+                    "ECS Container Instance State Change",
+                ],
+            },
+            targets: [new targets.LambdaFunction(this.taskStatus)],
+        });
+        this.connectionStatusQueue.grantSendMessages(this.taskStatus);
+        this.taskStatus.addToRolePolicy(
+            new iam.PolicyStatement({
+                resources: ["*"],
+                effect: iam.Effect.ALLOW,
+                actions: [
+                    "ecs:DescribeTasks",
+                    "ecs:ListTaskDefinitions",
+                    "ecs:DescribeTaskDefinition",
+                    "dynamodb:ConditionCheckItem",
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "ssm:PutParameter",
+                    "ssm:DeleteParameters",
                 ],
             })
         );
