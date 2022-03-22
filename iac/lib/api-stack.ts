@@ -20,6 +20,8 @@ export class ApiStack extends Stack {
     public readonly keygenApi: lambda.Function;
     public readonly taskBuilder: lambda.Function;
     public readonly taskStatus: lambda.Function;
+    public readonly taskStatusApi: lambda.Function;
+    public readonly stopTaskApi: lambda.Function;
 
     constructor(
         scope: Construct,
@@ -351,5 +353,118 @@ export class ApiStack extends Stack {
                 ],
             })
         );
+
+        // Task Status Api
+        this.taskStatusApi = new lambda.Function(this, "task-status-api", {
+            code: lambda.Code.fromAsset(__dirname + "/../../task-status-api", {
+                bundling: {
+                    image: lambda.Runtime.NODEJS_14_X.bundlingImage,
+                    user: "root",
+                    command: [
+                        "bash",
+                        "-c",
+                        "npm install && cp -au . /asset-output",
+                    ],
+                },
+            }),
+            handler: "index.handler",
+            runtime: lambda.Runtime.NODEJS_14_X,
+            environment: {
+                TASK_REQUEST_TABLE_NAME: taskRequestTableName.stringValue,
+            },
+            memorySize: 192,
+            timeout: Duration.minutes(1),
+        });
+        this.taskStatusApi.addToRolePolicy(
+            new iam.PolicyStatement({
+                resources: ["*"],
+                effect: iam.Effect.ALLOW,
+                actions: ["dynamodb:GetItem"],
+            })
+        );
+        const taskStatusApiIntegration = new apigateway.CfnIntegration(
+            this,
+            "task-status-integration",
+            {
+                apiId: api.ref,
+                integrationMethod: "POST",
+                integrationType: "AWS_PROXY",
+                integrationUri: this.taskStatusApi.functionArn,
+                payloadFormatVersion: "2.0",
+            }
+        );
+        new apigateway.CfnRoute(this, "task-status-route", {
+            apiId: api.ref,
+            routeKey: "POST /taskStatus",
+            target: "integrations/" + taskStatusApiIntegration.ref,
+            authorizationScopes: [
+                "https://api.stratoshell.com/stratoshell.taskApi",
+            ],
+            authorizationType: "JWT",
+            authorizerId: authorizer.ref,
+        });
+        new lambda.CfnPermission(this, "task-status-api-permission", {
+            functionName: this.taskStatusApi.functionName,
+            action: "lambda:InvokeFunction",
+            principal: "apigateway.amazonaws.com",
+            sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:*`,
+        });
+
+        // Stop Task Api
+        this.stopTaskApi = new lambda.Function(this, "stop-task-api", {
+            code: lambda.Code.fromAsset(__dirname + "/../../stop-task-api", {
+                bundling: {
+                    image: lambda.Runtime.NODEJS_14_X.bundlingImage,
+                    user: "root",
+                    command: [
+                        "bash",
+                        "-c",
+                        "npm install && cp -au . /asset-output",
+                    ],
+                },
+            }),
+            handler: "index.handler",
+            runtime: lambda.Runtime.NODEJS_14_X,
+            environment: {
+                TASK_REQUEST_TABLE_NAME: taskRequestTableName.stringValue,
+                CLUSTER_NAME: cluster.clusterName,
+            },
+            memorySize: 192,
+            timeout: Duration.minutes(1),
+        });
+        this.stopTaskApi.addToRolePolicy(
+            new iam.PolicyStatement({
+                resources: ["*"],
+                effect: iam.Effect.ALLOW,
+                actions: ["dynamodb:GetItem", "ecs:StopTask"],
+            })
+        );
+        const stopTaskApiIntegration = new apigateway.CfnIntegration(
+            this,
+            "stop-task-integration",
+            {
+                apiId: api.ref,
+                integrationMethod: "POST",
+                integrationType: "AWS_PROXY",
+                integrationUri: this.stopTaskApi.functionArn,
+                payloadFormatVersion: "2.0",
+            }
+        );
+        new apigateway.CfnRoute(this, "stop-task-route", {
+            apiId: api.ref,
+            routeKey: "POST /stopTask",
+            target: "integrations/" + stopTaskApiIntegration.ref,
+            authorizationScopes: [
+                "https://api.stratoshell.com/stratoshell.taskApi",
+            ],
+            authorizationType: "JWT",
+            authorizerId: authorizer.ref,
+        });
+        new lambda.CfnPermission(this, "stop-task-api-permission", {
+            functionName: this.stopTaskApi.functionName,
+            action: "lambda:InvokeFunction",
+            principal: "apigateway.amazonaws.com",
+            sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:*`,
+        });
     }
 }
