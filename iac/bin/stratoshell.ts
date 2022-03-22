@@ -6,6 +6,7 @@ import { DynamoStack } from "../lib/dynamo-stack";
 import { ImageStack } from "../lib/image-stack";
 import { CognitoStack } from "../lib/cognito-stack";
 import { ApiStack } from "../lib/api-stack";
+import { BastionStack } from "../lib/bastion-stack";
 
 const app = new cdk.App();
 
@@ -56,3 +57,13 @@ const apiStack = new ApiStack(
     imageStack.cluster,
     networkStack.taskSecurityGroup
 );
+
+// Bastion stack
+const bastionStack = new BastionStack(app, "stratoshell-bastion-stack", {
+    ...appConfig,
+    ...{
+        vpc: networkStack.vpc,
+        connectionStatusQueue: apiStack.connectionStatusQueue,
+        taskSecurityGroup: networkStack.taskSecurityGroup,
+    },
+});

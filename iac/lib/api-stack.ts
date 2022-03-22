@@ -61,6 +61,10 @@ export class ApiStack extends Stack {
                 visibilityTimeout: Duration.seconds(300),
             }
         );
+        new ssm.StringParameter(this, "connection-status-queue-name", {
+            parameterName: "/stratoshell/sqs/connection_status_queue_url",
+            stringValue: this.connectionStatusQueue.queueUrl,
+        });
 
         // Look up hosted zone
         const hostedZone = route53.HostedZone.fromLookup(

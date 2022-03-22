@@ -59,5 +59,9 @@ export class NetworkStack extends Stack {
                 allowAllOutbound: true,
             }
         );
+        this.taskSecurityGroup.addIngressRule(
+            ec2.Peer.ipv4(this.vpc.vpcCidrBlock),
+            ec2.Port.tcp(22)
+        );
     }
 }
