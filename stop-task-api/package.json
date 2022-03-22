@@ -1,0 +1,26 @@
+{
+    "name": "stratoshell-stopinstance",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "jest --config ./jest.config.json",
+        "test:watch": "npm run test -- --watch"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ethanrucinski/stratoshell-stopInstance.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/ethanrucinski/stratoshell-stopInstance/issues"
+    },
+    "homepage": "https://github.com/ethanrucinski/stratoshell-stopInstance#readme",
+    "dependencies": {
+        "@aws-sdk/client-dynamodb": "^3.5.0",
+        "@aws-sdk/client-ecs": "^3.5.0",
+        "@aws-sdk/util-dynamodb": "^3.5.0",
+        "jest": "^26.6.3"
+    }
+}

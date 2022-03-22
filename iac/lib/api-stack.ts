@@ -22,6 +22,7 @@ export class ApiStack extends Stack {
     public readonly taskStatus: lambda.Function;
     public readonly taskStatusApi: lambda.Function;
     public readonly stopTaskApi: lambda.Function;
+    public readonly connectionStatus: lambda.Function;
 
     constructor(
         scope: Construct,
@@ -466,5 +467,48 @@ export class ApiStack extends Stack {
             principal: "apigateway.amazonaws.com",
             sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:*`,
         });
+
+        // Connection Status Lambda
+        this.connectionStatus = new lambda.Function(this, "connection-status", {
+            code: lambda.Code.fromAsset(
+                __dirname + "/../../connection-status",
+                {
+                    bundling: {
+                        image: lambda.Runtime.NODEJS_14_X.bundlingImage,
+                        user: "root",
+                        command: [
+                            "bash",
+                            "-c",
+                            "npm install && cp -au . /asset-output",
+                        ],
+                    },
+                }
+            ),
+            handler: "index.handler",
+            runtime: lambda.Runtime.NODEJS_14_X,
+            environment: {
+                TASK_REQUEST_TABLE_NAME: taskRequestTableName.stringValue,
+                CLUSTER_NAME: cluster.clusterName,
+                CONNECTION_STATUS_QUEUE_NAME:
+                    this.connectionStatusQueue.queueName,
+            },
+            memorySize: 192,
+            timeout: Duration.minutes(1),
+        });
+        this.connectionStatus.addEventSource(
+            new eventSource.SqsEventSource(this.connectionStatusQueue)
+        );
+        this.connectionStatusQueue.grantSendMessages(this.connectionStatus);
+        this.connectionStatus.addToRolePolicy(
+            new iam.PolicyStatement({
+                resources: ["*"],
+                effect: iam.Effect.ALLOW,
+                actions: [
+                    "ecs:StopTask",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:GetItem",
+                ],
+            })
+        );
     }
 }
