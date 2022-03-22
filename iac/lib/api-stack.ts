@@ -351,6 +351,7 @@ export class ApiStack extends Stack {
                     "dynamodb:UpdateItem",
                     "ssm:PutParameter",
                     "ssm:DeleteParameters",
+                    "ssm:GetParameter",
                 ],
             })
         );
